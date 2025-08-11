@@ -134,4 +134,10 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': False,
+    'AUTH_COOKIE': 'jwt_access', # Name of the cookie for the access token
+    'AUTH_COOKIE_REFRESH': 'jwt_refresh', # Name of the cookie for the refresh token
+    'AUTH_COOKIE_DOMAIN': None, # Set to your domain in production (e.g., '.your-domain.com')
+    'AUTH_COOKIE_SECURE': True, # Set to True in production
+    'AUTH_COOKIE_HTTP_ONLY': True, # Prevents client-side JavaScript from accessing the cookie
+    'AUTH_COOKIE_SAMESITE': 'Lax', # Set to 'Strict' or 'Lax' to protect against CSRF
 }
