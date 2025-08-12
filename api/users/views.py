@@ -1,13 +1,20 @@
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import AllowAny
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .permissions import IsAdmin, IsSelfOrAdmin
+from .serializers import UserSerializer
+
+User = get_user_model()
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -81,3 +88,30 @@ class RefreshTokenView(APIView):
 
         except Exception as e:
             raise AuthenticationFailed('Refresh token is invalid or expired.')
+
+
+class UserCreateView(CreateModelMixin, GenericAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        # Handles the POST request to create a new user
+        return self.create(request, *args, **kwargs)
+
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_permissions(self):
+        # Use different permissions based on the action
+        if self.action == 'list':
+            # Only admins can view the list of all users
+            permission_classes = [IsAdmin]
+        elif self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
+            # For specific user objects, allow admins or the user themselves
+            permission_classes = [IsSelfOrAdmin]
+        else:
+            # For other actions (like 'create'), allow any authenticated user
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
